@@ -6,68 +6,77 @@ PASTE_CMD=""
 
 # 1: JWT payload
 _print_payload() {
-	echo -n "$1" | cut -d'.' -f2 | base64 -d | jq
+    echo -n "$1" | cut -d'.' -f2 | base64 -d | jq
 }
 
 # 1: Encoded JWT
 main() {
-	if [ "$1" = "" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ]; then
-		_help
-		return 0
-	fi
-	require_cmd jq
-	case $1 in
-		--clip | -c)
-			check_clipboard
-			_print_payload "$($PASTE_CMD)"
-		;;
-		*)
-			_print_payload "$1"
-		;;
-	esac
+    if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ]; then
+        _help
+        return 0
+    fi
+    require_cmd jq
+    if [ "$1" = "" ]; then
+        local cmd="--input"
+    else
+        local cmd="$1"
+    fi
+    case $cmd in
+        --clip | -c)
+            check_clipboard
+            _print_payload "$($PASTE_CMD)"
+        ;;
+        --input | -i)
+            read -r jwt
+            _print_payload "$jwt"
+        ;;
+        *)
+            _print_payload "$cmd"
+        ;;
+    esac
 }
 
 # 1: command to check
 require_cmd() {
-	if ! which $1 >/dev/null 2>&1; then
-		echo -e "Error: command '$1' is required, install it."
-		exit 42
-	fi
+    if ! which $1 >/dev/null 2>&1; then
+        echo -e "Error: command '$1' is required, install it."
+        exit 42
+    fi
 }
 
 check_clipboard() {
-	if _exists wl-paste; then
-		PASTE_CMD="wl-paste"
-	elif _exists pdpaste; then
-		PASTE_CMD="pbpaste"
-	elif _exists xclip; then
-		PASTE_CMD="xclip -sel clip -o"
-	else
-		echo -e "Error: platform doesn't provide paste from clipboard!"
-		exit 1
-	fi
+    if _exists wl-paste; then
+        PASTE_CMD="wl-paste"
+    elif _exists pdpaste; then
+        PASTE_CMD="pbpaste"
+    elif _exists xclip; then
+        PASTE_CMD="xclip -sel clip -o"
+    else
+        echo -e "Error: platform doesn't provide paste from clipboard!"
+        exit 1
+    fi
 }
 
 _help() {
-	echo -e "USAGE"
-	echo -e "\t jwt [OPTION...] [TOKEN]"
-	echo
-	echo -e "DESCRIPTION"
-	echo -e "\t jwt takes in input a well formatted JWT and prints its decoded"
-	echo -e "\t     payload in a pretty way."
-	echo
-	echo -e "\t It uses jq for json parsing and formatting and wl-paste,"
-	echo -e "\t pdpaste or xclip for reading from the clipboard."
-	echo
-	echo -e "OPTIONS"
-	echo -e "\t -c, --clip        copies the JWT from the clipboard"
-	echo -e "\t -?, -h, --help    show this help message"
+    echo -e "USAGE"
+    echo -e "\t jwt [OPTION...] [TOKEN]"
+    echo
+    echo -e "DESCRIPTION"
+    echo -e "\t jwt takes in input a well formatted JWT and prints its decoded"
+    echo -e "\t     payload in a pretty way."
+    echo
+    echo -e "\t It uses jq for json parsing and formatting and wl-paste,"
+    echo -e "\t pdpaste or xclip for reading from the clipboard."
+    echo
+    echo -e "OPTIONS"
+    echo -e "\t -c, --clip        copies the JWT from the clipboard"
+    echo -e "\t -?, -h, --help    show this help message"
 }
 
 # 1: command name
 _exists() {
-	command -V $1 >/dev/null 2>&1
-	return $?
+    command -V $1 >/dev/null 2>&1
+    return $?
 }
 
 main $@

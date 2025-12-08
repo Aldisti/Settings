@@ -82,19 +82,23 @@ set_ghostty() {
 }
 
 _install() {
-    if ! ask_bool "Install some apps using apt?"; then
-        return 0
-    fi
     sudo apt update
-    sudo apt install \
-        git vim nasm gparted valgrind jq \
-        openjdk-8-jdk openjdk-17-jdk openjdk-21-jdk openjdk-25-jdk
-    if ! ask_bool "Install some apps using snap?"; then
-        return 0
+
+    if ask_bool "Install some apps using apt?"; then
+        sudo apt install git vim nasm gparted valgrind jq xq wl-clipboard
     fi
-    sudo snap install \
-        code ghostty helm intellij-idea-ultimate \
-        obsidian postman brave kubectl go 
+
+    for ver in 8 17 21 25; do
+        if ask_bool "Install Java ${ver}?"; then
+            sudo apt install openjdk-${ver}-jdk
+        fi
+    done
+
+    if ask_bool "Install some apps using snap?"; then
+        sudo snap install \
+            code ghostty helm intellij-idea-ultimate \
+            obsidian postman brave kubectl go
+    fi
 }
 
 set_gnome() {
