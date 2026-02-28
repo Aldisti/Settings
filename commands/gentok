@@ -14,14 +14,18 @@ ROOT_DIR="$PWD/$(dirname $0)"
 
 # 1 (int): token size
 __base64() {
-	local token=$(openssl rand -base64 $1)
-	echo -e "$token"
+	local token=$(openssl rand -base64 256)
+	echo -e "$(echo -n $token | head -c $1)"
 }
 
-# no params
+# 1 (int): optional, number of characters to print
 __sha256() {
 	local token="$(cat /dev/urandom | head -30 | sha256sum | awk '{print $1}')"
-	echo -e "$token"
+    if [ "$1" = "" ]; then
+	    echo -e "$token"
+    else
+        echo -e "$(echo -n $token | head -c $1)"
+    fi
 }
 
 # no params
@@ -34,7 +38,7 @@ __help() {
 	echo
 	echo -e "commands:"
 	echo -e "\tuuid, id:\t\tprints a uuid."
-	echo -e "\tsha256, 256, sha:\tprints a random bytes hashed with sha256."
+	echo -e "\tsha256, 256, sha:\tprints random bytes hashed with sha256."
 	echo -e "\tbase64, 64, b64:\tprints a base64 encoded token of length SIZE."
 	echo
 	echo -e "options:"
@@ -56,8 +60,10 @@ main() {
 				return $?
 			;;
 			sha256 | sha | 256)
-				__debug "Mode: sha256 - Size: fixed"
-				__sha256
+				local size="$1"
+				if [ "$size" != "" ]; then shift; fi
+				__debug "Mode: sha256 - Size: $size"
+				__sha256 $size
 				return $?
 			;;
 			uuid | id)
