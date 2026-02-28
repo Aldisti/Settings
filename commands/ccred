@@ -1,0 +1,135 @@
+#!/bin/bash
+
+set -e
+
+RESET="\033[0m"
+GREEN="\033[32;1m"
+RED="\033[31;1m"
+CYAN="\033[36;1m"
+
+CURL_FLAGS="-sSL"
+EXTRACT_TOKEN=""
+
+_read_options() {
+    while [ $# -gt 0 ]; do
+        opt="$(echo $1 | tr 'A-Z' 'a-z')"
+        shift
+        case ${opt} in
+            -u | --url)
+                BASE_URL="$1"
+                shift
+            ;;
+            -c | --client)
+                CLIENT_ID="$1"
+                shift
+            ;;
+            -s | --secret)
+                CLIENT_SECRET="$1"
+                shift
+            ;;
+            -a | --access)
+                EXTRACT_TOKEN="access_token"
+            ;;
+            -r | --refresh)
+                EXTRACT_TOKEN="refresh_token"
+            ;;
+            -i | --insecure)
+                CURL_FLAGS="$CURL_FLAGS --insecure"
+            ;;
+            -v | --verbose)
+                CURL_FLAGS="$CURL_FLAGS -v"
+            ;;
+            -h | --help | -\?)
+                __debug "Showing helper"
+                __help
+                exit 0
+            ;;
+            *)
+                __error "Invalid argument '$opt'"
+                exit 1
+            ;;
+        esac
+    done
+}
+
+_get_vars() {
+    if [ "$BASE_URL" = "" ]; then
+        read -p "Enter Base URL: " BASE_URL
+    fi
+    if [ "$CLIENT_ID" = "" ]; then
+        read -p "Enter Client ID: " CLIENT_ID
+    fi
+    if [ "$CLIENT_SECRET" = "" ]; then
+        read -sp "Enter Client Secret: " CLIENT_SECRET
+        echo
+    fi
+    if [ "$TOKEN_URL" = "" ]; then
+        TOKEN_URL="${BASE_URL}/protocol/openid-connect/token"
+    fi
+}
+
+__help() {
+	echo -e "./ccred [OPTIONS [VALUE]]"
+	echo
+	echo -e "Options:"
+    echo -e "\t-a, --access:      prints the access token."
+    echo -e "\t-c, --client:      client id to use for authentication."
+    echo -e "\t-i, --insecure:    do not verify server certificate."
+    echo -e "\t-r, --refresh:     prints the refresh token."
+    echo -e "\t-s, --secret:      client secret to use for authentication."
+	echo -e "\t-u, --url:         base url to use for client credentials."
+    echo -e "\t-v, --verbose:     makes curl verbose."
+	echo -e "\t-h, --help:        shows this page."
+}
+
+__log() {
+	echo -e "$2$1$RESET: $3"
+}
+
+__debug() {
+	if [ "$DEBUG" = "true" ]; then
+		__log "DEBUG" $CYAN "$1"
+	fi
+}
+
+__info() {
+	if [ "$QUIET" != "true" ]; then
+		__log "INFO" $GREEN "$1"
+	fi
+}
+
+__error() {
+	__log "ERROR" $RED "$1"
+}
+
+is_valid_json() {
+  jq . >/dev/null 2>&1 <<<"$1"
+}
+
+print_json_or_not() {
+    if is_valid_json "$1"; then
+        jq . <<< "$1"
+    else
+        echo -e "$1"
+    fi
+}
+
+_read_options $@
+_get_vars
+
+RESPONSE=$(curl ${CURL_FLAGS} -X POST "${TOKEN_URL}" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -u "$CLIENT_ID:$CLIENT_SECRET" \
+     -d "grant_type=client_credentials")
+
+if is_valid_json "${RESPONSE}"; then
+    if [ "${EXTRACT_TOKEN}" != "" ] && [[ "${RESPONSE}" == *"${EXTRACT_TOKEN}"* ]]; then
+        jq -r ".${EXTRACT_TOKEN}" <<< "${RESPONSE}"
+    else
+        jq . -r <<< "${RESPONSE}"
+        exit 2
+    fi
+else
+    echo -e "$RESPONSE"
+    exit 3
+fi
