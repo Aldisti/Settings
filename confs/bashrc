@@ -116,6 +116,8 @@ alias dcmp="docker compose"
 alias dexe="docker exec"
 alias dbld="docker build"
 alias drun="docker run"
+alias dstr="docker start"
+alias dstp="docker stop"
 # alias dclean='drm -f $(dps -aq) && dimg rm -f $(dimg ls -aq) && dvol rm -f $(dvol ls -q)'
 alias dclean="echo -e 'You shouldn't use this type of aliases!'"
 # alias dcstart='drm -f $(dps -aq); dimg rm -f $(dimg ls -aq); dvol rm $(dvol ls -q); dcmp up'
@@ -173,7 +175,7 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 alias .....="cd ../../../.."
 
-HISTSIZE=80000
-HISTFILESIZE=100000
+export HISTSIZE=80000
+export HISTFILESIZE=100000
 
 
