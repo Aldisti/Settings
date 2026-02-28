@@ -3,10 +3,18 @@
 set -e
 
 PASTE_CMD=""
+HUMAN_READABLE=""
 
 # 1: JWT payload
 _print_payload() {
-    echo -n "$1" | cut -d'.' -f2 | base64 -d | jq
+    if [ "$HUMAN_READABLE" = "1" ]; then
+        local json="$(echo -n "$1" | cut -d'.' -f2 | base64 -d | jq)"
+        echo $json \
+            | jq ".exp = \"$(date -d @$(echo $json | jq .exp))\"" \
+            | jq ".iat = \"$(date -d @$(echo $json | jq .iat))\""
+    else
+        echo -n "$1" | cut -d'.' -f2 | base64 -d | jq
+    fi
 }
 
 # 1: Encoded JWT
@@ -15,6 +23,12 @@ main() {
         _help
         return 0
     fi
+    case $1 in
+        --human | -H)
+            HUMAN_READABLE=1
+            shift
+        ;;
+    esac
     require_cmd jq
     if [ "$1" = "" ]; then
         local cmd="--input"
@@ -34,6 +48,12 @@ main() {
             _print_payload "$cmd"
         ;;
     esac
+}
+
+# 1: json
+# 2: claim
+get_claim() {
+    echo "$1" | jq ".${2}"
 }
 
 # 1: command to check
@@ -70,6 +90,8 @@ _help() {
     echo
     echo -e "OPTIONS"
     echo -e "\t -c, --clip        copies the JWT from the clipboard"
+    echo -e "\t -i, --input       reads the JWT from stdin, default behavior"
+    echo -e "\t -H, --human       prints the JWT and replaces timestamps with dates"
     echo -e "\t -?, -h, --help    show this help message"
 }
 
