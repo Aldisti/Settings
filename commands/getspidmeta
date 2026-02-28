@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# 1: string to URL encode
+url_encode() {
+    printf '%s' "$1" | jq -Rr @uri
+}
+
+
+main() {
+    if ! [ $# = 1 ]; then
+        echo -e "Usage: $0 <entity_id>"
+        exit 1
+    fi
+
+    curl -sSL "https://registry.spid.gov.it/entities/$(url_encode "$1")" | xq
+}
+
+main $@
+
