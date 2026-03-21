@@ -80,7 +80,7 @@ alias nt="gnome-terminal --"
 # clean linux cache
 alias cleancache="echo 1 | sudo tee /proc/sys/vm/drop_caches > /dev/null"
 # show listening ports
-alias ports="lsof -i -n -P | grep LISTEN"
+alias ports="sudo lsof -i -n -P | grep LISTEN"
 
 # git shortcuts
 #alias gcln="git clone"
