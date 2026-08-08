@@ -146,6 +146,8 @@ alias ggg="g++ -Wall -Wextra -Werror -std=c++98"
 # executes python programs
 alias py="python3"
 alias venv="python3 -m venv .venv && source .venv/bin/activate"
+# run lsblk without showing snap loops
+alias lsblk="lsblk -e 7"
 
 # check for leaks with valgrind
 alias leaks="valgrind --leak-check=full --show-leak-kinds=all"
@@ -159,6 +161,14 @@ alias wiki="xdg-open https://en.wikipedia.org/wiki/Special:Random &"
 
 # Alias for a batcat command that doesn't print line numbers
 alias batnonum="batcat --style changes,header-filename"
+
+myip() {
+    if which jq >/dev/null; then
+        curl -sS ipinfo.io | jq
+    else
+        curl -sS ipinfo.io
+    fi
+}
 
 # oblique strategies
 # files in /usr/share/games/fortune/
@@ -178,4 +188,5 @@ alias .....="cd ../../../.."
 export HISTSIZE=80000
 export HISTFILESIZE=100000
 
+source $HOME/.bashrc_work
 
